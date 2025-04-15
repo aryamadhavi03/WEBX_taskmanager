@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ 'Edit' if task else 'Add' }} Task</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h2>{{ 'Edit' if task else 'Add' }} Task</h2>
+    <form method="POST">
+      <input type="text" name="title" placeholder="Title" value="{{ task.title if task else '' }}" required><br>
+      <textarea name="description" placeholder="Description" required>{{ task.description if task else '' }}</textarea><br>
+      <input type="date" name="deadline" value="{{ task.deadline if task else '' }}" required><br>
+      <select name="priority" required>
+        {% for p in ['High', 'Medium', 'Low'] %}
+        <option value="{{ p }}" {% if task and task.priority == p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select><br>
+      <select name="status" required>
+        {% for s in ['Not Started', 'In Progress', 'On Hold', 'Completed'] %}
+        <option value="{{ s }}" {% if task and task.status == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select><br>
+      <input type="text" name="tags" placeholder="Tags (comma-separated)" value="{{ ', '.join(task.tags) if task and task.tags else '' }}"><br>
+      <button type="submit">{{ 'Update' if task else 'Create' }}</button>
+      <a href="{{ url_for('user_dashboard') }}">Cancel</a>
+    </form>
+  </div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h2>Login</h2>
+    
+    <!-- Error message display -->
+    {% if error %}
+      <div class="error-message" style="color: red; font-weight: bold;">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <form method="POST">
+      <input type="email" name="email" placeholder="Email" required><br>
+      <div class="password-container">
+        <input type="password" name="password" id="password" placeholder="Password" required><br>
+        <span id="togglePassword" class="eye-icon">&#128065;</span>
+      </div>
+      <button type="submit">Login</button>
+    </form>
+    <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign up</a></p>
+  </div>
+
+  <script>
+    // Password visibility toggle
+    const togglePassword = document.querySelector("#togglePassword");
+    const password = document.querySelector("#password");
+
+    togglePassword.addEventListener("click", function () {
+      const type = password.type === "password" ? "text" : "password";
+      password.type = type;
+      this.classList.toggle("active");
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+  <nav class="nav-bar">
+    <div class="nav-brand">Task Manager - {{ current_user.username }}</div>
+    <div class="nav-links">
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="dashboard-grid">
+      <div class="dashboard-card">
+        <h2>Task Statistics</h2>
+        <ul>
+          <li>Total Tasks: {{ stats.total }}</li>
+          <li>Completed: {{ stats.completed }}</li>
+          <li>Pending: {{ stats.pending }}</li>
+        </ul>
+      </div>
+
+      <div class="dashboard-card">
+        <h2>Active Tasks</h2>
+
+        {% if active_tasks %}
+        <ul>
+      {% for task in active_tasks %}
+        <li>
+          <div class="task-info">
+            <strong>{{ task.title }}</strong>
+            <div class="task-meta">
+              <span class="status-badge status-{{ task.status.lower().replace(' ', '-') }}">{{ task.status }}</span>
+              <span><i class="far fa-calendar"></i> Due: {{ task.deadline if task.deadline else 'Not set' }}</span>
+              <span><i class="fas fa-flag"></i> {{ task.priority }}</span>
+            </div>
+          </div>
+          <form action="{{ url_for('update_task', task_id=task._id) }}" method="POST">
+            <select name="status">
+              <option value="Pending" {% if task.status == 'Pending' %}selected{% endif %}>Pending</option>
+              <option value="In Progress" {% if task.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+              <option value="Completed" {% if task.status == 'Completed' %}selected{% endif %}>Completed</option>
+            </select>
+            <button type="submit">Update</button>
+          </form>
+
+          <!-- ✅ Users should not be able to edit/delete tasks if admin controls that -->
+          {# Optional: Only show edit/delete if user owns task or is allowed #}
+        </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <p>No active tasks!</p>
+    {% endif %}
+
+      </div>
+
+      {% if completed_tasks %}
+      <div class="dashboard-card">
+        <h2>Completed Tasks</h2>
+        <ul>
+          {% for task in completed_tasks %}
+            <li>{{ task.title }} - Completed</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+</body>
+</html>

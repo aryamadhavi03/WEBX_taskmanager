@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 1rem auto;
+      padding: 0;
+    }
+
+    @media (min-width: 640px) {
+      .container {
+        padding: 0 1rem;
+        margin: 1.5rem auto;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .container {
+        padding: 0 2rem;
+        margin: 2rem auto;
+      }
+    }
+
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #0d6efd;
+      margin: 0.5rem 0;
+    }
+
+    .stat-label {
+      color: #6c757d;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .filters select, .filters input {
+      padding: 0.75rem;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      min-width: 200px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    .filters select:focus, .filters input:focus {
+      outline: none;
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 2px rgba(13,110,253,0.25);
+    }
+
+    .task-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      max-height: calc(100vh - 400px);
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .task-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .task-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+      }
+    }
+
+    @media (min-width: 1280px) {
+      .task-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .task-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .task-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .task-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .task-meta {
+      display: flex;
+      gap: 1rem;
+      margin: 1rem 0;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    .task-due-date {
+      background: #e9ecef;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-weight: 500;
+      color: #495057;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .task-due-date i {
+      color: #0d6efd;
+    }
+    .priority-badge, .status-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .priority-high { background: #ffd7d7; color: #dc3545; }
+    .priority-medium { background: #fff3cd; color: #ffc107; }
+    .priority-low { background: #d1e7dd; color: #198754; }
+
+    .status-not-started { background: #e2e3e5; color: #6c757d; }
+    .status-in-progress { background: #cfe2ff; color: #0d6efd; }
+    .status-completed { background: #d1e7dd; color: #198754; }
+
+    .task-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .tag {
+      background: #e9ecef;
+      color: #495057;
+      padding: 0.25rem 0.75rem;
+      border-radius: 15px;
+      font-size: 0.85rem;
+    }
+
+    .edit-btn {
+      background: #0d6efd;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .delete-btn:hover {
+      background: #c82333;
+    }
+
+    .edit-btn:hover {
+      background: #0b5ed7;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #6c757d;
+    }
+
+    .edit-form label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #495057;
+      font-weight: 500;
+    }
+
+    .edit-form input,
+    .edit-form select,
+    .edit-form textarea {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+
+    .edit-form button {
+      width: 100%;
+      padding: 0.75rem;
+      background: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .edit-form button:hover {
+      background: #0b5ed7;
+    }
+
+    /* Form Styling */
+    form {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    form input, form select, form button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    form button {
+      background-color: #28a745;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    form button:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <!-- Edit Task Modal -->
+  <div class="modal" id="editTaskModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeEditModal()">&times;</button>
+      <h2>Edit Task</h2>
+      <form class="edit-form" id="editTaskForm" method="POST">
+        <input type="hidden" id="editTaskId" name="task_id">
+        <div>
+          <label for="editTitle">Title</label>
+          <input type="text" id="editTitle" name="title" required>
+        </div>
+        <div>
+          <label for="editDescription">Description</label>
+          <textarea id="editDescription" name="description" required></textarea>
+        </div>
+        <div>
+          <label for="editPriority">Priority</label>
+          <select id="editPriority" name="priority" required>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div>
+          <label for="editStatus">Status</label>
+          <select id="editStatus" name="status" required>
+            <option value="Not Started">Not Started</option>
+            <option value="In Progress">In Progress</option>
+            <option value="On Hold">On Hold</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+        <div>
+          <label for="editDeadline">Deadline</label>
+          <input type="date" id="editDeadline" name="deadline" required>
+        </div>
+        <div>
+          <label for="editTags">Tags (comma-separated)</label>
+          <input type="text" id="editTags" name="tags">
+        </div>
+        <button type="submit">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <style>
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .logout-link {
+      padding: 0.5rem 1rem;
+      background-color: #dc3545;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .logout-link:hover {
+      background-color: #c82333;
+    }
+  </style>
+
+  <div class="container">
+    <div class="header-container">
+      <h1>Welcome, {{ current_user.username }}</h1>
+      <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+    </div>
+
+    <!-- Task Statistics -->
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.total }}</div>
+        <div class="stat-label">Total Tasks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.completed }}</div>
+        <div class="stat-label">Completed Tasks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.pending }}</div>
+        <div class="stat-label">Pending Tasks</div>
+      </div>
+    </div>
+
+    <!-- Task Filters -->
+    <div class="filters">
+      <select id="statusFilter" onchange="filterTasks()">
+        <option value="">Filter by Status</option>
+        <option value="Not Started">Not Started</option>
+        <option value="In Progress">In Progress</option>
+        <option value="On Hold">On Hold</option>
+        <option value="Completed">Completed</option>
+      </select>
+      <select id="priorityFilter" onchange="filterTasks()">
+        <option value="">Filter by Priority</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+      <input type="text" id="searchInput" placeholder="Search tasks..." oninput="filterTasks()">
+
+    <!-- Task Assignment Form -->
+    <form method="POST" action="{{ url_for('assign_task') }}" class="task-form">
+      <h3>Assign New Task</h3>
+      
+      <div class="form-group">
+        <label for="username">Assign to:</label>
+        <select name="username" id="username" required>
+          {% for user in users %}
+            <option value="{{ user.username }}">{{ user.username }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="title">Task Title:</label>
+        <input type="text" name="title" id="title" placeholder="Enter task title" required>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description:</label>
+        <textarea name="description" id="description" placeholder="Enter task description" rows="3" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="priority">Priority:</label>
+        <select name="priority" id="priority" required>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="due_date">Due Date:</label>
+        <input type="date" name="due_date" id="due_date" required>
+      </div>
+
+      <div class="form-group">
+        <label for="tags">Tags (comma-separated):</label>
+        <input type="text" name="tags" id="tags" placeholder="e.g. frontend, urgent, feature">
+      </div>
+
+      <button type="submit" class="btn-primary">Assign Task</button>
+    </form>
+
+    <!-- Task List -->
+    <div class="task-list-container">
+      <h3>All Tasks</h3>
+      <div class="task-grid">
+        {% for task in tasks %}
+        <div class="task-card" data-status="{{ task.status }}" data-priority="{{ task.priority }}">
+          <div class="task-header">
+            <div class="badge-container">
+              <span class="priority-badge priority-{{ task.get('priority', 'Medium').lower() }}">{{ task.get('priority', 'Medium') }}</span>
+              <span class="status-badge status-{{ task.get('status', 'Not Started').lower().replace(' ', '-') }}">{{ task.get('status', 'Not Started') }}</span>
+            </div>
+            <div class="button-group">
+              <button class="edit-btn" onclick="openEditModal(this)" data-task-id="{{ task._id }}" data-task-title="{{ task.title }}" data-task-description="{{ task.description }}" data-task-priority="{{ task.priority }}" data-task-deadline="{{ task.due_date }}">Edit</button>
+              <button class="delete-btn" onclick="deleteTask('{{ task._id }}')">Delete</button>
+            </div>
+          </div>
+          <h4>{{ task.title }}</h4>
+          <p class="task-description">{{ task.description }}</p>
+          <div class="task-meta">
+            <span class="task-assignee"><i class="fas fa-user"></i> Assigned to: {% for user in users %}{% if user._id|string in task.assigned_to %}{{ user.username }}{% endif %}{% endfor %}</span>
+            <span class="task-due-date"><i class="fas fa-calendar"></i> Due: {{ task.deadline if task.deadline else 'Not set' }}</span>
+          </div>
+          {% if task.tags %}
+          <div class="task-tags">
+            {% for tag in task.tags %}
+            <span class="tag">{{ tag }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ✅ Completed Tasks Section -->
+    <!-- <button class="toggle-btn" onclick="toggleSection('completedTasks', this)">
+      Show Completed Tasks <span>▼</span>
+    </button>
+    <ul id="completedTasks" class="toggle-section task-list">
+      {% for task in tasks %}
+        {% if task.status == "Completed" %}
+          <li>
+            <strong>{{ task.username }}</strong> - {{ task.title }}<br>
+            {{ task.content }}<br>
+            <em>Priority:</em> {{ task.priority }} |
+            <em>Due:</em> {{ task.due_date }} |
+            <em>Status:</em> {{ task.status }}<br>
+            <a href="{{ url_for('edit_task', task_id=task._id) }}">Edit Task</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ul> -->
+
+    <!-- <a href="{{ url_for('logout') }}">Logout</a> -->
+  </div>
+
+  <!-- ✅ Toggle Script with Icon Switching -->
+  <script>
+    function filterTasks() {
+      const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+      const priorityFilter = document.getElementById('priorityFilter').value.toLowerCase();
+      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+  
+      document.querySelectorAll('.task-card').forEach(card => {
+        const status = card.dataset.status.toLowerCase();
+        const priority = card.dataset.priority.toLowerCase();
+        const title = card.querySelector('h4').textContent.toLowerCase();
+        const description = card.querySelector('p').textContent.toLowerCase();
+  
+        const matchesStatus = !statusFilter || status === statusFilter.toLowerCase();
+        const matchesPriority = !priorityFilter || priority === priorityFilter;
+        const matchesSearch = !searchQuery || 
+          title.includes(searchQuery) || 
+          description.includes(searchQuery);
+  
+        card.style.display = (matchesStatus && matchesPriority && matchesSearch) ? 'block' : 'none';
+      });
+    }
+
+    function deleteTask(taskId) {
+      if (confirm('Are you sure you want to delete this task?')) {
+        fetch(`/task/delete/${taskId}`, {
+          method: 'POST'
+        }).then(response => {
+          if (response.ok) {
+            // Find and remove the task card from DOM
+            const taskCard = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+            if (taskCard) {
+              taskCard.remove();
+              // Update task statistics
+              const totalTasks = document.querySelector('.stat-number');
+              if (totalTasks) {
+                totalTasks.textContent = parseInt(totalTasks.textContent) - 1;
+              }
+            }
+          } else {
+            alert('Failed to delete task. Please try again.');
+          }
+        }).catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred while deleting the task.');
+        });
+      }
+    }
+  </script>
+<script>
+function deleteTask(taskId) {
+  if (confirm('Are you sure you want to delete this task?')) {
+    fetch(`/task/delete/${taskId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        alert('Failed to delete task. Please try again.');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while deleting the task.');
+    });
+  }
+}
+
+function openEditModal(button) {
+  const modal = document.getElementById('editTaskModal');
+  const form = document.getElementById('editTaskForm');
+  
+  // Get all data attributes
+  const taskId = button.getAttribute('data-task-id');
+  const title = button.getAttribute('data-task-title');
+  const description = button.getAttribute('data-task-description');
+  const priority = button.getAttribute('data-task-priority');
+  const status = button.getAttribute('data-task-status');
+  const deadline = button.getAttribute('data-task-deadline');
+  const tags = button.getAttribute('data-task-tags');
+  
+  // Set form action
+  form.action = `/task/edit/${taskId}`;
+  
+  // Populate form fields with existing data
+  document.getElementById('editTaskId').value = taskId;
+  document.getElementById('editTitle').value = title;
+  document.getElementById('editDescription').value = description;
+  document.getElementById('editPriority').value = priority;
+  document.getElementById('editStatus').value = status;
+  document.getElementById('editDeadline').value = deadline;
+  document.getElementById('editTags').value = tags;
+  
+  modal.classList.add('active');
+}
+
+
+function closeEditModal() {
+  const modal = document.getElementById('editTaskModal');
+  modal.classList.remove('active');
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  const modal = document.getElementById('editTaskModal');
+  if (event.target === modal) {
+    closeEditModal();
+  }
+};
+</script>
+</body>
+</html>

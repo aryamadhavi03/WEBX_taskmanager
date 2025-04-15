@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    .password-container {
+      position: relative;
+    }
+    .eye-icon {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      user-select: none;
+    }
+    .error-message {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #f5c6cb;
+      border-radius: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Login</h2>
+    
+    {% if error %}
+      <div class="error-message">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <form method="POST" id="loginForm">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="password-container">
+          <input type="password" id="password" name="password" required>
+          <span class="eye-icon" data-target="password">👁️</span>
+        </div>
+      </div>
+
+      <button type="submit">Login</button>
+    </form>
+
+    <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign up</a></p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Password visibility toggle
+      document.querySelectorAll('.eye-icon').forEach(icon => {
+        icon.addEventListener('click', function() {
+          const targetId = this.dataset.target;
+          const input = document.getElementById(targetId);
+          if (input.type === 'password') {
+            input.type = 'text';
+            this.textContent = '👁️‍🗨️';
+          } else {
+            input.type = 'password';
+            this.textContent = '👁️';
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

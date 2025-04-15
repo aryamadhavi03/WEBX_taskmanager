@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kanban Board - Task Manager</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .kanban-container {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      overflow-x: auto;
+      min-height: calc(100vh - 200px);
+    }
+
+    .kanban-column {
+      flex: 1;
+      min-width: 300px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .column-header {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #dee2e6;
+    }
+
+    .task-card {
+      background: white;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 0.8rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      cursor: move;
+    }
+
+    .task-card:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .task-title {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .task-meta {
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+
+    .priority-badge {
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: white;
+    }
+
+    .priority-high { background-color: #dc3545; }
+    .priority-medium { background-color: #ffc107; color: #000; }
+    .priority-low { background-color: #28a745; }
+
+    .task-actions {
+      margin-top: 0.5rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .task-actions button {
+      padding: 0.2rem 0.5rem;
+      font-size: 0.8rem;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .edit-btn { background-color: #17a2b8; color: white; }
+    .delete-btn { background-color: #dc3545; color: white; }
+
+    @media (max-width: 768px) {
+      .kanban-container {
+        flex-direction: column;
+      }
+      .kanban-column {
+        min-width: 100%;
+        margin-bottom: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Task Board</h2>
+    
+    <div class="kanban-container">
+      {% for status in ['Not Started', 'In Progress', 'On Hold', 'Completed'] %}
+      <div class="kanban-column" data-status="{{ status }}">
+        <div class="column-header">{{ status }}</div>
+        {% for task in tasks if task.status == status %}
+        <div class="task-card" draggable="true" data-task-id="{{ task._id }}">
+          <div class="task-title">{{ task.title }}</div>
+          <div class="task-meta">
+            <span class="priority-badge priority-{{ task.priority.lower() }}">{{ task.priority }}</span>
+            <span>Due: {{ task.deadline }}</span>
+          </div>
+          {% if task.tags %}
+          <div class="task-tags">
+            {% for tag in task.tags %}
+            <span class="tag">{{ tag }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+          <div class="task-actions">
+            <button class="edit-btn" onclick="editTask('{{ task._id }}')">Edit</button>
+            <button class="delete-btn" onclick="deleteTask('{{ task._id }}')">Delete</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <script>
+    // Drag and Drop functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const taskCards = document.querySelectorAll('.task-card');
+      const columns = document.querySelectorAll('.kanban-column');
+
+      taskCards.forEach(card => {
+        card.addEventListener('dragstart', dragStart);
+        card.addEventListener('dragend', dragEnd);
+      });
+
+      columns.forEach(column => {
+        column.addEventListener('dragover', dragOver);
+        column.addEventListener('drop', drop);
+      });
+    });
+
+    function dragStart(e) {
+      e.target.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', e.target.dataset.taskId);
+    }
+
+    function dragEnd(e) {
+      e.target.classList.remove('dragging');
+    }
+
+    function dragOver(e) {
+      e.preventDefault();
+    }
+
+    function drop(e) {
+      e.preventDefault();
+      const taskId = e.dataTransfer.getData('text/plain');
+      const newStatus = e.target.closest('.kanban-column').dataset.status;
+      
+      // Update task status via AJAX
+      fetch(`/update_task/${taskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `status=${encodeURIComponent(newStatus)}`
+      }).then(response => {
+        if (response.ok) {
+          window.location.reload();
+        }
+      });
+    }
+
+    function editTask(taskId) {
+      window.location.href = `/task/edit/${taskId}`;
+    }
+
+    function deleteTask(taskId) {
+      if (confirm('Are you sure you want to delete this task?')) {
+        fetch(`/task/delete/${taskId}`, {
+          method: 'POST'
+        }).then(response => {
+          if (response.ok) {
+            window.location.reload();
+          }
+        });
+      }
+    }
+  </script>
+</body>
+</html>
