@@ -46,24 +46,6 @@ class Task:
             'updated_at': datetime.utcnow()
         }
 
-    def add_collaborator(self, user_id):
-        """Add a collaborator to the task"""
-        if user_id not in self.collaborators:
-            self.collaborators.append(user_id)
-        return {
-            'collaborators': self.collaborators,
-            'updated_at': datetime.utcnow()
-        }
-
-    def remove_collaborator(self, user_id):
-        """Remove a collaborator from the task"""
-        if user_id in self.collaborators:
-            self.collaborators.remove(user_id)
-        return {
-            'collaborators': self.collaborators,
-            'updated_at': datetime.utcnow()
-        }
-
     def add_tags(self, tags):
         """Add tags to the task"""
         new_tags = [tag for tag in tags if tag not in self.tags]
